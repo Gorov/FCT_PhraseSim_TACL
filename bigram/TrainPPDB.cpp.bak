@@ -1,0 +1,106 @@
+//
+//  word2vec.cpp
+//  word2vec
+//
+//  Created by gflfof gflfof on 14-1-22.
+//  Copyright (c) 2014年 hit. All rights reserved.
+//
+
+//  Copyright 2013 Google Inc. All Rights Reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <pthread.h>
+#include <sstream>
+
+#include "AllLearner.h"
+
+char train_file[MAX_STRING], dev_file[MAX_STRING], output_file[MAX_STRING];
+char clus_file[MAX_STRING], baseemb_file[MAX_STRING], freq_file[MAX_STRING];
+char model_file[MAX_STRING];
+char trainsub_file[MAX_STRING];
+int iter = 20;
+int finetuning = 1;
+real alpha = 0.01;
+
+int ArgPos(char *str, int argc, char **argv) {
+    int a;
+    for (a = 1; a < argc; a++) if (!strcmp(str, argv[a])) {
+        if (a == argc - 1) {
+            printf("Argument missing for %s\n", str);
+            exit(1);
+        }
+        return a;
+    }
+    return -1;
+}
+
+int main(int argc, char **argv) {
+    int i;
+    if (argc == 1) {
+        cout << "./train -train ../nyt_eng_199407.bnp.trainall -trainsub ../nyt_eng_199407.bnp.trainsub -dev ../nyt_eng_199407.bnp.dev -emb ../../model/vectors.nyt.cbow.out -clus ../clusters.nyt.cbow.out.c200 -freqfile ../nyt.freq.txt -model ../nyt_eng_199407.model.FirstDay -iter 1 -alpha 0.01" << endl;
+        return 0;
+    }
+    
+    else{
+        //if ((i = ArgPos((char *)"-size", argc, argv)) > 0) layer1_size = atoi(argv[i + 1]);
+        if ((i = ArgPos((char *)"-train", argc, argv)) > 0) strcpy(train_file, argv[i + 1]);
+        if ((i = ArgPos((char *)"-trainsub", argc, argv)) > 0) strcpy(trainsub_file, argv[i + 1]);
+        if ((i = ArgPos((char *)"-dev", argc, argv)) > 0) strcpy(dev_file, argv[i + 1]);
+        if ((i = ArgPos((char *)"-emb", argc, argv)) > 0) strcpy(baseemb_file, argv[i + 1]);
+        if ((i = ArgPos((char *)"-clus", argc, argv)) > 0) strcpy(clus_file, argv[i + 1]);
+        if ((i = ArgPos((char *)"-freqfile", argc, argv)) > 0) strcpy(freq_file, argv[i + 1]);
+        //if ((i = ArgPos((char *)"-cbow", argc, argv)) > 0) cbow = atoi(argv[i + 1]);
+        if ((i = ArgPos((char *)"-iter", argc, argv)) > 0) iter = atoi(argv[i + 1]);
+        if ((i = ArgPos((char *)"-alpha", argc, argv)) > 0) alpha = atof(argv[i + 1]);
+        if ((i = ArgPos((char *)"-model", argc, argv)) > 0) strcpy(model_file, argv[i + 1]);
+        if ((i = ArgPos((char *)"-finetuning", argc, argv)) > 0) finetuning = atoi(argv[i + 1]);
+//        if ((i = ArgPos((char *)"-window", argc, argv)) > 0) window = atoi(argv[i + 1]);
+//        if ((i = ArgPos((char *)"-sample", argc, argv)) > 0) sample = atof(argv[i + 1]);
+//        if ((i = ArgPos((char *)"-hs", argc, argv)) > 0) hs = atoi(argv[i + 1]);
+//        if ((i = ArgPos((char *)"-negative", argc, argv)) > 0) negative = atoi(argv[i + 1]);
+//        if ((i = ArgPos((char *)"-threads", argc, argv)) > 0) num_threads = atoi(argv[i + 1]);
+//        if ((i = ArgPos((char *)"-min-count", argc, argv)) > 0) min_count = atoi(argv[i + 1]);
+//        if ((i = ArgPos((char *)"-ppfile", argc, argv)) > 0) strcpy(pp_file, argv[i + 1]);
+//        if ((i = ArgPos((char *)"-lambda", argc, argv)) > 0) lambda = atof(argv[i + 1]);
+    }
+    cout << "Start" << endl;
+    cout << baseemb_file << endl;
+    cout << train_file << endl;
+    //SkipgramLearner* plearner = new SkipgramLearner(baseemb_file, clus_file, train_file);
+    PPDBLearnerB2U* plearner = new PPDBLearnerB2U(baseemb_file, clus_file, train_file, LM);
+    
+    cout << "Number of Features: " << plearner -> num_fea << endl;
+    cout << "Number of Instances: " << plearner -> fea_model -> num_inst << endl;
+    //plearner -> InitVocab("../data/nyt.freq.txt");
+    plearner -> InitVocab(freq_file);
+    plearner -> iter = iter;
+    plearner -> eta = plearner -> eta0 = alpha;
+    plearner -> update_emb = (finetuning == 1);
+    
+    plearner -> EvalMRR(dev_file, 1000);
+    plearner -> next_random = 0;
+    //plearner -> TrainBigData(train_file, trainsub_file, dev_file);
+    plearner -> TrainData(train_file);
+        plearner -> EvalMRR(dev_file, 1000);
+        plearner -> EvalMRR(dev_file, 5000);
+        plearner -> EvalMRR(dev_file, 10000);
+        plearner -> EvalMRR(dev_file, 50000);
+        plearner -> EvalMRR(dev_file, 100000);
+    
+    return 0;
+}
