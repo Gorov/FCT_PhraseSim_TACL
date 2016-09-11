@@ -17,4 +17,20 @@ Mo Yu, Mark Dredze. Learning Composition Models for Phrase Embeddings. TACL 2015
 
 We have two code base for bigram experiments and n-gram experiments. The code for n-grams is based on the FCM code at: https://github.com/Gorov/FCM_nips_workshop.
 
+######
+#Data#
+######
+
+The PPDB XXL data can be found in the data/ directory: each instance consists of three lines:
+
+line 1: word form and POS tag for the first word
+
+line 2: word form and POS tag for the second word
+
+line 3: the target word which paraphrases the above bigram
+
+#################
+#Word Embeddings#
+#################
+
 The word embeddings can be found at http://www.asiteof.me/yumo/data/vectors.nyt2011.cbow.bin
