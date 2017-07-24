@@ -33,4 +33,4 @@ line 3: the target word which paraphrases the above bigram
 #Word Embeddings#
 #################
 
-The word embeddings can be found at http://yumo.asiteof.me/data/vectors.nyt2011.cbow.bin
+The word embeddings can be found at http://yumo.asiteof.me/yumo/data/vectors.nyt2011.cbow.bin
